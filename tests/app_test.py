@@ -1,7 +1,6 @@
 import os
 import unittest
 import sys
-import requests
 import json
 
 sys.path.append("..")

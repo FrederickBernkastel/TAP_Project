@@ -217,23 +217,7 @@ class BasicTests(unittest.TestCase):
         self.assertFalse(db.register_students(session,"'studenthon@example.com'",["'teacherbob@mail.edu.sg'"]),"Registered non-existant teacher")
         
         
-"""
-    def test_main_page(self):
-        response = self.app.get('/', follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
-        
-    def test_register(self):
-        # Import requests
-        res = requests.post('http://localhost:5000//api/register', json={
-                "teacher":"teacherken@gmail.com",
-                "students":[
-                        "studentjon@example.com",
-                        "studenthon@example.com"
-                        ]
-                })
-        
-        self.assertEqual(res.ok,True,"Registration API POST Failed")
-"""
+
  
  
 if __name__ == "__main__":

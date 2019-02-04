@@ -1,3 +1,6 @@
+Publicly Hosted API
+	http://brianchew.pythonanywhere.com
+
 Requirements
 	Local SQl server
 
