@@ -1,11 +1,8 @@
+"""Application APIs
+"""
+
 from flask import Flask, Response, request, jsonify
 from app import db, errors
-
-# Get parent dir path
-#currentdir = os.path.dirname(
-#    os.path.abspath(inspect.getfile(inspect.currentframe())))
-#parentdir = os.path.dirname(currentdir)
-#sys.path.insert(0, parentdir)
 
 # Constants defintion
 room_info_dic = {"1.101":{"type":"office","occupant":"Angry Bird","capacity":1},
@@ -19,6 +16,23 @@ app.config.from_pyfile('config.py')
 
 @app.route("/api/register",methods=['POST'])
 def api_register():
+    """Registers students under a teacher
+    
+    Endpoint:
+        POST /api/register
+    Headers: Content-Type:
+        application/json
+    Success response status:
+        HTTP 204
+    Request body example:
+        {
+            "teacher": "teacherken@gmail.com"
+            "students":
+            [
+            "studentjon@example.com",
+            "studenthon@example.com"
+        }
+    """
     # Load latest app config into db
     database = db.DB(app)
     
@@ -52,6 +66,35 @@ def api_register():
         
 @app.route("/api/commonstudents",methods=['GET'])
 def api_get_common_students():
+    """Retrieves students commonly registered to a list of teachers
+    
+    Endpoint:
+        GET /api/commonstudents
+    Success response status:
+        HTTP 200
+    Request example 1:
+        GET /api/commonstudents?teacher=teacherken%40example.com
+    Success response body 1:
+        {
+            "students" :
+            [
+                "commonstudent1@gmail.com",
+                "commonstudent2@gmail.com",
+                "student_only_under_teacher_ken@gmail.com"
+            ]
+        }
+    Request example 2:
+        GET /api/commonstudents?teacher=teacherken%40example.com&teacher=teacherjoe%40example.com
+    Success response body 2:
+        {
+            "students" :
+            [
+                "commonstudent1@gmail.com",
+                "commonstudent2@gmail.com"
+            ]
+        }
+    """
+    
     # Load latest app config into db
     database = db.DB(app)
     
@@ -71,6 +114,19 @@ def api_get_common_students():
 
 @app.route("/api/suspend",methods=['POST'])
 def api_suspend():
+    """Suspends a specified student
+    
+    Endpoint: 
+        POST /api/suspend
+    Headers: 
+        Content-Type: application/json
+    Success response status: 
+        HTTP 204
+    Request body example:
+        {
+            "student" : "studentmary@gmail.com"
+        }
+    """
     # Load latest app config into db
     database = db.DB(app)
     
@@ -102,6 +158,29 @@ def api_suspend():
     
 @app.route("/api/retrievefornotifications",methods=['POST'])
 def api_retrieve_for_notifications():
+    """Retrieve a list of students who can receive a given notification.
+    
+    Endpoint: 
+        POST /api/retrievefornotifications
+    Headers: 
+        Content-Type: application/json
+    Success response status: 
+        HTTP 200
+    Request body example 1:
+        {
+            "teacher": "teacherken@example.com",
+            "notification": "Hello students! @studentagnes@example.com @studentmiche@example.com"
+        }
+    Success response body 1:
+        {
+            "recipients":
+            [
+                "studentbob@example.com",
+                "studentagnes@example.com",
+                "studentmiche@example.com"
+            ]
+        }
+    """
     # Load latest app config into db
     database = db.DB(app)
     
@@ -132,6 +211,8 @@ def api_retrieve_for_notifications():
 
 @app.errorhandler(errors.InvalidUsage)
 def handle_invalid_usage(error):
+    """Handles error with an appropriate HTTP code and JSON response
+    """
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response

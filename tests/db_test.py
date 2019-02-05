@@ -1,3 +1,9 @@
+"""Unit test of db.py
+
+This module contains unit tests for module db.py
+Unit tests are executed using a local sqlite in the base directory
+"""
+
 import os
 import unittest
 import sys

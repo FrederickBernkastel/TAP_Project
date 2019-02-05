@@ -1,3 +1,8 @@
+"""Unit test of application API
+
+This module contains unit tests for application API
+Unit tests are executed using a local sqlite in the base directory
+"""
 import os
 import unittest
 import sys

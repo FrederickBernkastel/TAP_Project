@@ -1,3 +1,10 @@
+"""SQL database Query and Transactions
+
+This module handles queries and transactions to the relevant database.
+The entry point to this package is the class DB, which contains the methods
+required for queries and transaction with the database.
+"""
+
 import re
 from sqlalchemy import Column, Table, ForeignKey, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
@@ -15,7 +22,11 @@ registration_table = Table(REGISTRATIONS_TABLE_NAME, Base.metadata,
     Column('studentmail', String(320), ForeignKey('students.mail'),primary_key=True)
 )
 
+
 class Teacher(Base):
+    """
+    SQL Alchemy Table object with Table structure to hold information about teachers
+    """
     __tablename__ = TEACHERS_TABLE_NAME
     mail = Column(String(320), primary_key=True)
     students = relationship(
@@ -24,6 +35,9 @@ class Teacher(Base):
         back_populates="teachers")
  
 class Student(Base):
+    """
+    SQL Alchemy Table object with Table structure to hold information about students
+    """
     __tablename__ = STUDENTS_TABLE_NAME
     mail = Column(String(320), primary_key=True)
     suspended = Column(Boolean,default=False)
@@ -33,7 +47,22 @@ class Student(Base):
         back_populates="students")
 
 class DB:
+    """
+    Contains methods to query and transact with the database
+    """
     def __init__(self,app=None):
+        """Initializes DB using application configuration
+        
+        Initializes DB using application configuration, such as the database URI.
+        
+        If no application configuration is provided, default configurations as
+        specified in config.py files will be used instead.
+        
+        Parameters
+        ----------
+        app: flask.app.Flask
+            Flask application class containing configuration settings
+        """
         if app==None:
             from app import app
         
@@ -45,8 +74,19 @@ class DB:
          
     
         
-    # Creates entries in table for testing
     def create_all(self,session):
+        """Creates and populates database tables with testing data
+        
+        Creates and populates database tables with data for testing. If the 
+        current application is not configured for testing, this method will do
+        nothing.
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        """
         if not self.IS_TEST:
             return
         
@@ -72,8 +112,13 @@ class DB:
             
         
         
-    # Drop entries in table for testing
     def drop_all(self):
+        """Drops relevant exisiting database tables
+        
+        Drops relevant database tables for testing. If the 
+        current application is not configured for testing, this method will do
+        nothing.
+        """
         if not self.IS_TEST:
             return
         try:
@@ -89,45 +134,170 @@ class DB:
         except exc.OperationalError:
             pass
     
-    # Encapsulate mail by single quotes if necessary, and returns new string
+    
     def format_mail(self,mail):
+        """Formats provided mail address
+        
+        Encapsulate mail by single quotes if necessary, and returns new string,
+        to ensure compatibality with database records
+        
+        Parameters
+        ----------
+        mail: string
+            Email to format
+        
+        Returns
+        -------
+        string:
+            Formatted Email
+        """
         return "'%s'"%(mail) if len(mail)>2 and mail[0]!="'" and mail[-1]!="'" else mail
     
-    # De-encapsulates mail by single quotes if neccessary and returns new string
+    
     def deformat_mail(self,mail):
+        """Deformats provided mail address
+        
+        De-encapsulates mail by single quotes if neccessary and returns new 
+        string
+        
+        Parameters
+        ----------
+        mail: string
+            Email to deformat
+        
+        Returns
+        -------
+        string:
+            Deformatted Email
+        """
         return mail[1:-1] if len(mail)>2 and mail[0]==mail[-1]=="'" else mail
         
-    # Checks database for existence of teacher by email
     def is_teacher_exist(self,session, mail):
+        """Queries database for existence of teacher's email
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of teacher to query for
+            
+        Returns
+        -------
+        bool:
+            True if a teacher with the provided email exists
+            False otherwise
+        """
         mail = self.format_mail(mail)
         teacher = session.query(Teacher).get(mail)
         return isinstance(teacher,Teacher)
     
-    # Checks database for existence of teacher by email
+    
     def is_student_exist(self,session, mail):
+        """Queries database for existence of student's email
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of student to query for
+            
+        Returns
+        -------
+        bool:
+            True if a student with the provided email exists
+            False otherwise
+        """
         mail = self.format_mail(mail)
         student = session.query(Student).get(mail)
         return isinstance(student,Student)
     
-    # Checks database if student exists and is not suspended
+    
     def is_student_active(self,session,mail):
+        """Queries database for existence of unsuspended student's email
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of student to query for
+            
+        Returns
+        -------
+        bool
+            True if a student with the provided email exists and is unsuspended
+            False otherwise
+        """
         mail = self.format_mail(mail)
         if self.is_student_exist(session,mail):
             return not session.query(Student.suspended).filter_by(mail=mail).first()[0]
         return False
     
-    # Returns Teacher object if in db, else None
     def get_teacher(self,session,mail):
+        """Queries database for teacher's information
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of teacher to query for
+            
+        Returns
+        -------
+        Teacher:
+            Teacher object containing information on the teaceher with the mail
+            None if no teacher with the mail exists
+        """
         mail = self.format_mail(mail)
         return session.query(Teacher).get(mail)
     
-    # Returns Student object if in db, else None
+    
     def get_student(self,session,mail):
+        """Queries database for student's information
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of student to query for
+            
+        Returns
+        -------
+        Teacher:
+            Student object containing information on the student with the mail
+            None if no student with the mail exists
+        """
         mail = self.format_mail(mail)
         return session.query(Student).get(mail)
     
-    # Returns mail of Students registered to teacher as set
+    
     def get_student_mail_by_teacher(self,session, mail,isNotSuspended=False):
+        """Queries database for students registered under teacher
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of teacher to query for
+        isNotSuspended: bool
+            Indicates if suspended students should be excluded
+            
+        Returns
+        -------
+        set:
+            Set of student emails, as string, registered under the teacher
+        """
         mail = self.format_mail(mail)
         query = session.query(Student.mail)
         # Removes suspended students if required
@@ -136,25 +306,81 @@ class DB:
         values = query.filter(Student.teachers.any(mail=mail)).all()
         return {self.deformat_mail(tup[0]) for tup in values}
     
-    # Returns mail of Students registered to teachers as set
+    
     def get_student_mail_by_teachers(self,session, mail_list):
+        """Queries database for students registered under multiple teachers
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail_list: list
+            List of String teacher emails to query for
+            
+        Returns
+        -------
+        set:
+            Set of student emails, as string, registered under the teachers
+        """
         mail_list = [self.format_mail(mail) for mail in mail_list]
         query = session.query(Student.mail)
         for mail in mail_list:
             query = query.filter(Student.teachers.any(mail=mail))
         return {self.deformat_mail(tup[0]) for tup in query.all()}
     
-    # Suspends a student by setting "suspended" col to True
-    # Returns True if student is recorded as suspended, else False if Student not in db
+    
     def suspend_student(self,session,mail):
+        """Updates database by suspending student
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of student to suspend
+            
+        Returns
+        -------
+        bool:
+            True if transaction successful
+            False otherwise
+        """
         mail = self.format_mail(mail)
         if self.is_student_exist(session,mail):
-            session.query(Student).filter_by(mail=mail).update({Student.suspended:True})
-            return True
+            try:
+                session.query(Student).filter_by(mail=mail).update({Student.suspended:True})
+                return True
+            except:
+                return False
         return False
     
-    # Returns list of students who are able to receive notifications
+    
     def get_student_mail_by_notification(self,session,teachermail,notification):
+        """Queries database for unsuspended students able to receive notification
+        
+        Queries database for list of unsuspended students able to receive 
+        notification.
+        Students are able to receive notification if they are unsuspended and
+        either registered under the teacher, or have been tagged in the 
+        notification with '@'
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        mail: string
+            Email of teacher sending notification
+        notification: string
+            Contents of notification
+            
+        Returns
+        -------
+        set:
+            Set of student emails, as string, able to receive notifications
+        """
         # Finds referenced students
         notification_student_mails = re.findall(r'@([\S]+@[\S]+)',notification)
         # Remove non-existant and suspended Student mails
@@ -165,6 +391,24 @@ class DB:
     # Registers provided student under teacher
     # Returns True if teacher and students exists, False otherwise
     def register_students(self,session,teachermail,studentmail_list):
+        """Registers provided students under teacher
+        
+        Parameters
+        ----------
+        session: sqlalchemy.orm.session.Session
+            SQLAlchemy session class for recording pending transactions with the 
+            database
+        teachermail: string
+            Email of teacher to register students under
+        studentmail_list: list
+            List of student emails to register under teacher
+            
+        Returns
+        -------
+        bool:
+            True if transaction successful
+            False otherwise
+        """
         teachermail = self.format_mail(teachermail)
         studentmail_list = [self.format_mail(studentmail) for studentmail in studentmail_list]
         
@@ -184,6 +428,9 @@ class DB:
                 student = self.get_student(session,studentmail)
                 if student not in teacher.students:
                     teacher.students.append(student)
-        session.merge(teacher)
-        return True
+        try:
+            session.merge(teacher)
+            return True
+        except:
+            return False
 
